@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+  
+  web:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+  
+  worker:
+    build: ./backend
+    command: python worker.py
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+  
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend/static:/usr/share/nginx/html/static
+      - ./frontend/templates:/usr/share/nginx/html/templates
+    depends_on:
+      - web

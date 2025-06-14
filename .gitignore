@@ -1,0 +1,27 @@
+@"
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env/
+.venv/
+venv/
+
+# Redis
+dump.rdb
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# System
+.DS_Store
+Thumbs.db
+"@ | Out-File .gitignore -Encoding UTF8

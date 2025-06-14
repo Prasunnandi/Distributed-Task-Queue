@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Task Queue Dashboard</title>
+    <style>
+        /* Main Layout */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Header */
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        /* Task Form */
+        .task-form {
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+        }
+
+        .task-form h2 {
+            margin-top: 0;
+            color: #2980b9;
+        }
+
+        #taskInput {
+            width: 70%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 12px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        /* Task List */
+        .task-list {
+            margin-top: 20px;
+        }
+
+        .task {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #3498db;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .processing {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .completed {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .task-meta {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            #taskInput {
+                width: 60%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #taskInput {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Task Queue Dashboard</h1>
+        
+        <div class="task-form">
+            <h2>Submit New Task</h2>
+            <form id="taskForm">
+                <input type="text" id="taskInput" placeholder="Enter task data" required>
+                <button type="submit">Submit Task</button>
+            </form>
+            <div id="message"></div>
+        </div>
+        
+        <div class="task-list">
+            <h2>Task Status</h2>
+            <div id="tasks"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('taskForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('taskInput');
+            const message = document.getElementById('message');
+            
+            try {
+                const response = await fetch('/add_task', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: input.value })
+                });
+                
+                const result = await response.json();
+                if (result.task_id) {
+                    input.value = '';
+                    message.textContent = `Task ${result.task_id} submitted!`;
+                    monitorTask(result.task_id);
+                }
+            } catch (error) {
+                message.textContent = `Error: ${error.message}`;
+                console.error('Error:', error);
+            }
+        });
+
+        async function monitorTask(taskId) {
+            const tasksDiv = document.getElementById('tasks');
+            const taskElement = document.createElement('div');
+            taskElement.className = 'task';
+            taskElement.id = `task-${taskId}`;
+            taskElement.innerHTML = `
+                <div><strong>ID:</strong> ${taskId}</div>
+                <div><strong>Status:</strong> <span class="status processing">Processing</span></div>
+            `;
+            tasksDiv.prepend(taskElement);
+
+            const checkStatus = async () => {
+                try {
+                    const response = await fetch(`/task_status/${taskId}`);
+                    const data = await response.json();
+                    
+                    if (data.status === 'completed') {
+                        const statusSpan = taskElement.querySelector('.status');
+                        statusSpan.textContent = 'Completed';
+                        statusSpan.className = 'status completed';
+                        taskElement.innerHTML += `
+                            <div><strong>Result:</strong> ${data.result.original_data.toUpperCase()}</div>
+                            <div><strong>Processed At:</strong> ${new Date(data.result.processed_at * 1000).toLocaleString()}</div>
+                        `;
+                    } else {
+                        setTimeout(checkStatus, 1000);
+                    }
+                } catch (error) {
+                    console.error('Error checking status:', error);
+                    setTimeout(checkStatus, 2000);
+                }
+            };
+            
+            checkStatus();
+        }
+    </script>
+</body>
+</html>
