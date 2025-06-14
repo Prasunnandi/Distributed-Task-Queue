@@ -1,6 +1,6 @@
 # Distributed Task Queue System
 
-![Architecture Diagram](https://i.imgur.com/JKQk3Yl.png) *(Example: Add your architecture diagram here)*
+
 
 A high-performance, Redis-backed distributed task queue with Flask web interface, designed to demonstrate core SDE-1 skills in distributed systems, concurrency, and full-stack development.
 
