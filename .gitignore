@@ -25,3 +25,13 @@ logs/
 .DS_Store
 Thumbs.db
 "@ | Out-File .gitignore -Encoding UTF8
+
+@"
+__pycache__/
+*.pyc
+*.db
+.env
+"@ | Out-File .gitignore -Encoding UTF8
+git add .gitignore
+git commit -m "Update .gitignore"
+git push
